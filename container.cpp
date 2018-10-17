@@ -22,6 +22,7 @@
 
 
 #include <iostream>
+#include <stdlib.h>
 #include <sched.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -43,6 +44,19 @@ int run(const char *name) {
 }
 
 
+char* stack_memory() {
+
+  const int stackSize = 65536;
+  char *stack = new (std::nothrow) char[stackSize];
+
+  if (stack == NULL) {
+      std::cout << "Cannot allocate memory" << std::endl;
+      exit(255);
+  }  
+
+  return stack+stackSize;    //move the pointer to the end of the array because the stack grows backward. 
+}
+
 /**
     The jail is the process that will be called via the chroot, it is abstractly
     like a "jailed" process as it only "sees" the root of itself and below
@@ -51,6 +65,7 @@ int run(const char *name) {
 
 int jail(void *) { 
     std::cout << "[child ] Hello Dinosaur!" << std::endl;
+    std::cout << "Child process " << getpid() << std::endl;
     run("/bin/sh");
     return 0;
 }
@@ -60,9 +75,12 @@ int main() {
     // Announce we are in the parent process
     std::cout << "[parent] Hello Dinosaur!" << std::endl;
 
+    int pid; 
+
     // Clone
-    clone(jail, 0, SIGCHLD, 0);
+    pid = clone(jail, stack_memory(), SIGCHLD, 0);
+    std::cout << "[parent] Cloning process." << std::endl;
     wait(NULL);
-    std::cout << "[parent] Cloned process." << std::endl;
+    std::cout << "[parent] Process Exit." << std::endl;
     return 0;
 }
