@@ -32,29 +32,36 @@
 // Function prototypes
 
 int jail(void *);
-
+int run(const char *name);
+char* stack_memory();
 
 // Function declarations
 
 
 //we can call it like this: run("/bin/sh");
 int run(const char *name) {
-  char *_args[] = {(char *)name, (char *)0 };
-  execvp(name, _args);
+    char *_args[] = {(char *)name, (char *)0 };
+    execvp(name, _args);
 }
 
+/**
+    We need to manually allocate memory for the executable to run. This
+    function allocates an arbitrary amount of memory to pass back to clone.
+
+*/
 
 char* stack_memory() {
 
-  const int stackSize = 65536;
-  char *stack = new (std::nothrow) char[stackSize];
+    const int stackSize = 65536;
+    char *stack = new (std::nothrow) char[stackSize];
 
-  if (stack == NULL) {
-      std::cout << "Cannot allocate memory" << std::endl;
-      exit(255);
-  }  
+    if (stack == NULL) {
+        std::cout << "Cannot allocate memory" << std::endl;
+        exit(255);
+    }  
 
-  return stack+stackSize;    //move the pointer to the end of the array because the stack grows backward. 
+    //move the pointer to the end of the array because the stack grows backward. 
+    return stack + stackSize;
 }
 
 /**
@@ -77,7 +84,7 @@ int main() {
 
     int pid; 
 
-    // Clone
+    // Clone, meaning we load the binary into memory
     pid = clone(jail, stack_memory(), SIGCHLD, 0);
     std::cout << "[parent] Cloning process." << std::endl;
     wait(NULL);
