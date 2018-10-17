@@ -20,6 +20,7 @@
       ./container
 */
 
+
 #include <iostream>
 #include <sched.h>
 #include <sys/types.h>
@@ -35,6 +36,13 @@ int jail(void *);
 // Function declarations
 
 
+//we can call it like this: run("/bin/sh");
+int run(const char *name) {
+  char *_args[] = {(char *)name, (char *)0 };
+  execvp(name, _args);
+}
+
+
 /**
     The jail is the process that will be called via the chroot, it is abstractly
     like a "jailed" process as it only "sees" the root of itself and below
@@ -43,6 +51,7 @@ int jail(void *);
 
 int jail(void *) { 
     std::cout << "[child ] Hello Dinosaur!" << std::endl;
+    run("/bin/sh");
     return 0;
 }
 
@@ -51,10 +60,9 @@ int main() {
     // Announce we are in the parent process
     std::cout << "[parent] Hello Dinosaur!" << std::endl;
 
-    int pid;
-
     // Clone
-    pid = clone(jail, NULL, SIGCHLD, 0);
-    std::cout << "[parent] Cloned process " << pid << std::endl;
+    clone(jail, 0, SIGCHLD, 0);
+    wait(NULL);
+    std::cout << "[parent] Cloned process." << std::endl;
     return 0;
 }
