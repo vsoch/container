@@ -71,9 +71,10 @@ char* stack_memory() {
 */
 
 int jail(void *) { 
+    clearenv();
     std::cout << "[child ] Hello Dinosaur!" << std::endl;
     std::cout << "Child process " << getpid() << std::endl;
-    run("/bin/sh");
+    run("/bin/bash");
     return 0;
 }
 
@@ -82,10 +83,11 @@ int main() {
     // Announce we are in the parent process
     std::cout << "[parent] Hello Dinosaur!" << std::endl;
 
-    int pid; 
-
     // Clone, meaning we load the binary into memory
-    pid = clone(jail, stack_memory(), SIGCHLD, 0);
+    // CLONE_NEWPID : isolate process from rest (like it's running solo)
+    // CLONE_NEWUTS : clone UTS namespace (requires sudo to run)
+
+    clone(jail, stack_memory(), CLONE_NEWPID | CLONE_NEWUTS | SIGCHLD, 0);
     std::cout << "[parent] Cloning process." << std::endl;
     wait(NULL);
     std::cout << "[parent] Process Exit." << std::endl;
